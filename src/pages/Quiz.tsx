@@ -151,10 +151,16 @@ const Quiz: React.FC = () => {
   const finishQuiz = async () => {
     // Calculate score
     const score = answers.reduce((total, answer, index) => {
-      if (answer === questions[index]?.correct_option) {
-        return total + 1;
-      }
-      return total;
+      const question = questions[index];
+      let isCorrect = false;
+      
+      // Fix: Determine if the answer is correct by comparing the text
+      if (answer === 'option_a' && question.option_a === question.correct_option) isCorrect = true;
+      else if (answer === 'option_b' && question.option_b === question.correct_option) isCorrect = true;
+      else if (answer === 'option_c' && question.option_c === question.correct_option) isCorrect = true;
+      else if (answer === 'option_d' && question.option_d === question.correct_option) isCorrect = true;
+      
+      return isCorrect ? total + 1 : total;
     }, 0);
 
     // Save result to Supabase

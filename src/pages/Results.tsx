@@ -215,13 +215,15 @@ const Results: React.FC = () => {
   const getOptionText = (question: Question, optionValue: string | null) => {
     if (!optionValue) return "Not answered";
     
-    switch (optionValue) {
-      case 'option_a': return question.option_a;
-      case 'option_b': return question.option_b;
-      case 'option_c': return question.option_c;
-      case 'option_d': return question.option_d;
-      default: return "Unknown option";
-    }
+    // Fix: The option value could be the actual answer text (e.g., "JavaScript") 
+    // or option key (e.g., "option_a")
+    if (optionValue === "option_a") return question.option_a;
+    if (optionValue === "option_b") return question.option_b;
+    if (optionValue === "option_c") return question.option_c;
+    if (optionValue === "option_d") return question.option_d;
+    
+    // If the value is already the answer text itself, return it directly
+    return optionValue;
   };
 
   return (
@@ -256,7 +258,9 @@ const Results: React.FC = () => {
                 
                 {questions.map((question, index) => {
                   const userAnswer = answers[index];
-                  const isCorrect = userAnswer === question.correct_option;
+                  // Fix: Compare the actual text of the answers, not just the option keys
+                  const isCorrect = 
+                    getOptionText(question, userAnswer) === question.correct_option;
                   
                   return (
                     <div 
@@ -278,7 +282,7 @@ const Results: React.FC = () => {
                         {!isCorrect && (
                           <div className="text-green-700">
                             <span className="font-semibold">Correct answer: </span>
-                            {getOptionText(question, question.correct_option)}
+                            {question.correct_option}
                           </div>
                         )}
                       </div>
