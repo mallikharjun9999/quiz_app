@@ -1,36 +1,34 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { signIn, loading, user } = useAuth();
+
+  useEffect(() => {
+    // If user is already logged in, redirect to categories
+    if (user) {
+      navigate('/categories');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     try {
-      // This is a placeholder for Supabase auth
-      console.log("Logging in with:", email, password);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // On successful login
-      navigate("/categories");
-    } catch (error) {
-      console.error("Login error:", error);
-      setError("Invalid email or password. Please try again.");
-    } finally {
-      setLoading(false);
+      await signIn(email, password);
+    } catch (error: any) {
+      setError(error.message || "Invalid email or password. Please try again.");
     }
   };
 
@@ -39,7 +37,7 @@ const Login: React.FC = () => {
       <Navbar />
       <main className="flex-grow flex items-center justify-center bg-[rgba(230,236,234,1)] py-16 px-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-2xl font-bold text-center mb-6">Login to Your Account</h1>
+          <h1 className="text-2xl font-bold text-center mb-6">Login to Your Quizzy Account</h1>
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">

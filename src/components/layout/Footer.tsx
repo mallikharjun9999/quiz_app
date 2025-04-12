@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 
@@ -13,14 +14,10 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-[rgba(4,56,40,1)] w-full overflow-hidden px-16 py-20 max-md:max-w-full max-md:px-5">
+    <footer className="bg-[rgba(4,56,40,1)] w-full overflow-hidden px-16 py-20 max-md:max-w-full">
       <div className="flex min-h-[248px] w-full gap-[40px_128px] flex-wrap max-md:max-w-full">
         <div className="min-w-60 w-[500px] max-md:max-w-full">
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/1f67d0a6911a4bf39ff22ccf7dcdc401/d3447201baca981a55abc181762bdd8a598c6b2c?placeholderIfAbsent=true"
-            className="aspect-[2.33] object-contain w-[84px]"
-            alt="Quiz Platform Logo"
-          />
+          <span className="text-white text-2xl font-bold">Quizzy</span>
           <p className="text-white text-base font-normal mt-6 max-md:max-w-full">
             Subscribe to our newsletter for the latest features and updates.
           </p>
@@ -168,7 +165,7 @@ export const Footer: React.FC = () => {
       <div className="w-full text-sm text-white font-normal mt-20 max-md:max-w-full max-md:mt-10">
         <div className="border min-h-px w-full border-[rgba(255,255,255,0.2)] border-solid max-md:max-w-full" />
         <div className="flex w-full gap-[40px_100px] justify-between flex-wrap mt-8 max-md:max-w-full">
-          <div>© 2025 Relume. All rights reserved.</div>
+          <div>© 2025 Quizzy. All rights reserved.</div>
           <div className="flex min-w-60 gap-6 underline">
             <a
               href="#"

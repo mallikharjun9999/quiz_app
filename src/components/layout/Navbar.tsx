@@ -3,13 +3,12 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { Menu } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  
-  // Simple check if user is logged in (this would be replaced by actual auth state)
-  const isLoggedIn = location.pathname !== "/login" && location.pathname !== "/register" && location.pathname !== "/";
+  const { user, signOut, loading } = useAuth();
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -20,11 +19,7 @@ export const Navbar: React.FC = () => {
       <div className="flex w-full items-center justify-between max-md:flex-wrap">
         <div className="flex items-center">
           <Link to="/">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/1f67d0a6911a4bf39ff22ccf7dcdc401/cc95ec7fca422430081dbd06d1db24fc625d4d37?placeholderIfAbsent=true"
-              className="aspect-[2.33] object-contain w-[84px]"
-              alt="Quiz Platform Logo"
-            />
+            <span className="text-white text-2xl font-bold">Quizzy</span>
           </Link>
         </div>
         
@@ -41,7 +36,7 @@ export const Navbar: React.FC = () => {
           <Link to="/" className="whitespace-nowrap">
             Home
           </Link>
-          {isLoggedIn && (
+          {user && (
             <Link to="/categories" className="whitespace-nowrap">
               Quizzes
             </Link>
@@ -53,9 +48,14 @@ export const Navbar: React.FC = () => {
         
         {/* Auth buttons */}
         <div className="hidden md:flex items-center gap-4 text-base">
-          {isLoggedIn ? (
-            <Button variant="primary" size="sm" onClick={() => console.log("Logout")}>
-              Logout
+          {user ? (
+            <Button 
+              variant="primary" 
+              size="sm" 
+              onClick={() => signOut()}
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "Logout"}
             </Button>
           ) : (
             <>
@@ -85,7 +85,7 @@ export const Navbar: React.FC = () => {
             >
               Home
             </Link>
-            {isLoggedIn && (
+            {user && (
               <Link 
                 to="/categories" 
                 className="px-4 py-2"
@@ -103,16 +103,17 @@ export const Navbar: React.FC = () => {
             </Link>
             
             <div className="flex flex-col gap-2 px-4 mt-2">
-              {isLoggedIn ? (
+              {user ? (
                 <Button 
                   variant="primary" 
                   size="sm" 
                   onClick={() => {
-                    console.log("Logout");
+                    signOut();
                     setIsMenuOpen(false);
                   }}
+                  disabled={loading}
                 >
-                  Logout
+                  {loading ? "Loading..." : "Logout"}
                 </Button>
               ) : (
                 <>

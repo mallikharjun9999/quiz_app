@@ -1,114 +1,106 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface Question {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
+  id: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: string;
 }
 
 const Quiz: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
+  const location = useLocation();
+  const categoryId = location.state?.categoryId;
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<(number | null)[]>([null, null, null, null, null]);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<(string | null)[]>([]);
   const [timer, setTimer] = useState(30);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Mock questions based on category
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [categoryName, setCategoryName] = useState("");
 
   useEffect(() => {
-    const loadQuestions = async () => {
-      // This would be replaced with a real API call to fetch questions
-      // For now, we'll simulate a delay and use mock data
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data for different categories
-      const mockQuestions: Record<string, Question[]> = {
-        'general-knowledge': [
-          {
-            id: 1,
-            question: "Which planet is known as the Red Planet?",
-            options: ["Venus", "Mars", "Jupiter", "Saturn"],
-            correctAnswer: 1
-          },
-          {
-            id: 2,
-            question: "What is the capital of France?",
-            options: ["London", "Berlin", "Madrid", "Paris"],
-            correctAnswer: 3
-          },
-          {
-            id: 3,
-            question: "Who painted the Mona Lisa?",
-            options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
-            correctAnswer: 2
-          },
-          {
-            id: 4,
-            question: "What is the largest ocean on Earth?",
-            options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
-            correctAnswer: 3
-          },
-          {
-            id: 5,
-            question: "In which year did the Titanic sink?",
-            options: ["1910", "1912", "1915", "1918"],
-            correctAnswer: 1
-          }
-        ],
-        'science': [
-          {
-            id: 1,
-            question: "What is the chemical symbol for gold?",
-            options: ["Au", "Ag", "Fe", "G"],
-            correctAnswer: 0
-          },
-          {
-            id: 2,
-            question: "Which of these is not a type of blood cell?",
-            options: ["Red blood cell", "White blood cell", "Platelet", "Neuron"],
-            correctAnswer: 3
-          },
-          {
-            id: 3,
-            question: "What is the hardest natural substance on Earth?",
-            options: ["Gold", "Iron", "Diamond", "Platinum"],
-            correctAnswer: 2
-          },
-          {
-            id: 4,
-            question: "Which planet has the most moons?",
-            options: ["Jupiter", "Saturn", "Uranus", "Neptune"],
-            correctAnswer: 1
-          },
-          {
-            id: 5,
-            question: "What is the most abundant gas in Earth's atmosphere?",
-            options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
-            correctAnswer: 2
-          }
-        ],
-        // Add more categories as needed
-      };
-      
-      // Default to general knowledge if category not found
-      setQuestions(mockQuestions[categorySlug || ''] || mockQuestions['general-knowledge']);
-      setIsLoading(false);
+    const fetchCategoryAndQuestions = async () => {
+      if (!categoryId) {
+        toast({
+          title: "Error",
+          description: "Category ID is missing. Please select a category again.",
+          variant: "destructive"
+        });
+        navigate('/categories');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        
+        // Fetch category name
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('categories')
+          .select('name')
+          .eq('id', categoryId)
+          .single();
+        
+        if (categoryError) {
+          throw categoryError;
+        }
+        
+        setCategoryName(categoryData.name);
+        
+        // Fetch questions for this category
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('category_id', categoryId)
+          .limit(5);
+        
+        if (questionsError) {
+          throw questionsError;
+        }
+        
+        if (questionsData.length === 0) {
+          toast({
+            title: "No questions found",
+            description: `No questions available for ${categoryData.name} category.`,
+            variant: "destructive"
+          });
+          navigate('/categories');
+          return;
+        }
+        
+        setQuestions(questionsData);
+        // Initialize answers array with nulls
+        setAnswers(new Array(questionsData.length).fill(null));
+      } catch (error) {
+        console.error('Error fetching quiz data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load quiz questions",
+          variant: "destructive"
+        });
+        navigate('/categories');
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    loadQuestions();
-  }, [categorySlug]);
+    fetchCategoryAndQuestions();
+  }, [categoryId, navigate]);
 
   useEffect(() => {
     // Timer logic
@@ -126,12 +118,12 @@ const Quiz: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentQuestionIndex]);
 
-  const handleOptionSelect = (optionIndex: number) => {
-    setSelectedOption(optionIndex);
+  const handleOptionSelect = (option: string) => {
+    setSelectedOption(option);
     
     // Update answers array
     const newAnswers = [...answers];
-    newAnswers[currentQuestionIndex] = optionIndex;
+    newAnswers[currentQuestionIndex] = option;
     setAnswers(newAnswers);
   };
 
@@ -146,14 +138,36 @@ const Quiz: React.FC = () => {
     }
   };
 
-  const finishQuiz = () => {
+  const finishQuiz = async () => {
     // Calculate score
     const score = answers.reduce((total, answer, index) => {
-      if (answer === questions[index]?.correctAnswer) {
+      if (answer === questions[index]?.correct_option) {
         return total + 1;
       }
       return total;
     }, 0);
+
+    // Save result to Supabase
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from('results')
+          .insert([
+            {
+              user_id: user.id,
+              category_id: categoryId,
+              score: score,
+              total_questions: questions.length
+            }
+          ]);
+          
+        if (error) {
+          console.error('Error saving quiz result:', error);
+        }
+      } catch (error) {
+        console.error('Error saving quiz result:', error);
+      }
+    }
 
     // Navigate to results page with score and answers
     navigate('/results', { 
@@ -162,6 +176,8 @@ const Quiz: React.FC = () => {
         totalQuestions: questions.length,
         answers,
         questions,
+        categoryId,
+        categoryName,
         categorySlug
       } 
     });
@@ -173,7 +189,8 @@ const Quiz: React.FC = () => {
         <Navbar />
         <main className="flex-grow flex items-center justify-center bg-[rgba(230,236,234,1)]">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Loading Quiz...</h2>
+            <div className="w-12 h-12 border-4 border-[rgba(80,126,111,1)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold">Loading Quiz...</h2>
             <p>Please wait while we prepare your questions</p>
           </div>
         </main>
@@ -183,6 +200,34 @@ const Quiz: React.FC = () => {
   }
 
   const currentQuestion = questions[currentQuestionIndex];
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center bg-[rgba(230,236,234,1)]">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">No Questions Available</h2>
+            <p className="mb-4">There are no questions available for this category.</p>
+            <Button 
+              variant="primary" 
+              onClick={() => navigate('/categories')}
+            >
+              Return to Categories
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Map options to array for easier rendering
+  const options = [
+    { value: 'option_a', label: currentQuestion.option_a },
+    { value: 'option_b', label: currentQuestion.option_b },
+    { value: 'option_c', label: currentQuestion.option_c },
+    { value: 'option_d', label: currentQuestion.option_d }
+  ].filter(option => option.label); // Filter out any empty options
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -200,29 +245,29 @@ const Quiz: React.FC = () => {
           
           <Card className="mb-8">
             <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-6">{currentQuestion?.question}</h2>
+              <h2 className="text-xl font-bold mb-6">{currentQuestion.question_text}</h2>
               
               <div className="space-y-4" id="options-container">
-                {currentQuestion?.options.map((option, index) => (
+                {options.map((option, index) => (
                   <div
-                    key={index}
+                    key={option.value}
                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedOption === index
+                      selectedOption === option.value
                         ? 'bg-[rgba(80,126,111,0.2)] border-[rgba(80,126,111,1)]'
                         : 'bg-white hover:bg-gray-50'
                     }`}
-                    onClick={() => handleOptionSelect(index)}
+                    onClick={() => handleOptionSelect(option.value)}
                     id={`option-${index}`}
                   >
                     <div className="flex items-center">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
-                        selectedOption === index
+                        selectedOption === option.value
                           ? 'bg-[rgba(80,126,111,1)] text-white'
                           : 'border border-gray-400'
                       }`}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      <div>{option}</div>
+                      <div>{option.label}</div>
                     </div>
                   </div>
                 ))}
