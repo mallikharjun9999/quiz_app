@@ -37,9 +37,14 @@ export const Navbar: React.FC = () => {
             Home
           </Link>
           {user && (
-            <Link to="/categories" className="whitespace-nowrap">
-              Quizzes
-            </Link>
+            <>
+              <Link to="/categories" className="whitespace-nowrap">
+                Quizzes
+              </Link>
+              <Link to="/results" className="whitespace-nowrap">
+                My Results
+              </Link>
+            </>
           )}
           <Link to="/about" className="whitespace-nowrap">
             About Us
@@ -86,13 +91,22 @@ export const Navbar: React.FC = () => {
               Home
             </Link>
             {user && (
-              <Link 
-                to="/categories" 
-                className="px-4 py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Quizzes
-              </Link>
+              <>
+                <Link 
+                  to="/categories" 
+                  className="px-4 py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Quizzes
+                </Link>
+                <Link 
+                  to="/results" 
+                  className="px-4 py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Results
+                </Link>
+              </>
             )}
             <Link 
               to="/about" 

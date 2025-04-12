@@ -33,6 +33,7 @@ const Quiz: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [categoryName, setCategoryName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategoryAndQuestions = async () => {
@@ -48,6 +49,9 @@ const Quiz: React.FC = () => {
 
       try {
         setIsLoading(true);
+        setError(null);
+        
+        console.log("Fetching category with ID:", categoryId);
         
         // Fetch category name
         const { data: categoryData, error: categoryError } = await supabase
@@ -57,10 +61,17 @@ const Quiz: React.FC = () => {
           .single();
         
         if (categoryError) {
+          console.error("Error fetching category:", categoryError);
           throw categoryError;
         }
         
+        if (!categoryData) {
+          setError("Category not found. Please select a different category.");
+          return;
+        }
+        
         setCategoryName(categoryData.name);
+        console.log("Category name:", categoryData.name);
         
         // Fetch questions for this category
         const { data: questionsData, error: questionsError } = await supabase
@@ -70,30 +81,28 @@ const Quiz: React.FC = () => {
           .limit(5);
         
         if (questionsError) {
+          console.error("Error fetching questions:", questionsError);
           throw questionsError;
         }
         
-        if (questionsData.length === 0) {
-          toast({
-            title: "No questions found",
-            description: `No questions available for ${categoryData.name} category.`,
-            variant: "destructive"
-          });
-          navigate('/categories');
+        console.log("Questions data:", questionsData);
+        
+        if (!questionsData || questionsData.length === 0) {
+          setError(`No questions available for ${categoryData.name} category.`);
           return;
         }
         
         setQuestions(questionsData);
         // Initialize answers array with nulls
         setAnswers(new Array(questionsData.length).fill(null));
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching quiz data:', error);
+        setError("Failed to load quiz questions. Please try again later.");
         toast({
           title: "Error",
           description: "Failed to load quiz questions",
           variant: "destructive"
         });
-        navigate('/categories');
       } finally {
         setIsLoading(false);
       }
@@ -150,7 +159,7 @@ const Quiz: React.FC = () => {
     // Save result to Supabase
     if (user) {
       try {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('results')
           .insert([
             {
@@ -159,10 +168,22 @@ const Quiz: React.FC = () => {
               score: score,
               total_questions: questions.length
             }
-          ]);
+          ])
+          .select();
           
         if (error) {
           console.error('Error saving quiz result:', error);
+          toast({
+            title: "Error",
+            description: "Failed to save your quiz result",
+            variant: "destructive"
+          });
+        } else {
+          console.log('Quiz result saved successfully:', data);
+          toast({
+            title: "Success",
+            description: "Your quiz result has been saved",
+          });
         }
       } catch (error) {
         console.error('Error saving quiz result:', error);
@@ -192,6 +213,27 @@ const Quiz: React.FC = () => {
             <div className="w-12 h-12 border-4 border-[rgba(80,126,111,1)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h2 className="text-2xl font-bold">Loading Quiz...</h2>
             <p>Please wait while we prepare your questions</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center bg-[rgba(230,236,234,1)]">
+          <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-red-600">Error</h2>
+            <p className="mb-6">{error}</p>
+            <Button 
+              variant="primary" 
+              onClick={() => navigate('/categories')}
+            >
+              Return to Categories
+            </Button>
           </div>
         </main>
         <Footer />

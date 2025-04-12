@@ -43,15 +43,22 @@ const Results: React.FC = () => {
   const { user } = useAuth();
   const [pastResults, setPastResults] = useState<PastResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const state = location.state as ResultsState;
   
   useEffect(() => {
     const fetchPastResults = async () => {
-      if (!user) return;
+      if (!user) {
+        navigate('/login');
+        return;
+      }
       
       try {
         setLoading(true);
+        setError(null);
+        console.log("Fetching past results for user:", user.id);
+        
         const { data, error } = await supabase
           .from('results')
           .select(`
@@ -65,8 +72,12 @@ const Results: React.FC = () => {
           .order('created_at', { ascending: false });
         
         if (error) {
+          console.error("Error fetching results:", error);
+          setError("Failed to load your quiz history. Please try again later.");
           throw error;
         }
+        
+        console.log("Past results:", data);
         
         const formattedResults = data.map(result => ({
           id: result.id,
@@ -77,7 +88,7 @@ const Results: React.FC = () => {
         }));
         
         setPastResults(formattedResults);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching past results:', error);
         toast({
           title: "Error",
@@ -90,7 +101,7 @@ const Results: React.FC = () => {
     };
     
     fetchPastResults();
-  }, [user]);
+  }, [user, navigate]);
   
   // If someone navigates directly to this page without taking a quiz
   if (!state || !state.questions) {
@@ -99,14 +110,60 @@ const Results: React.FC = () => {
         <Navbar />
         <main className="flex-grow flex items-center justify-center bg-[rgba(230,236,234,1)]">
           <div className="text-center p-8">
-            <h2 className="text-2xl font-bold mb-4">No Results to Display</h2>
-            <p className="mb-6">You need to complete a quiz to view detailed results.</p>
-            <Button 
-              variant="primary" 
-              onClick={() => navigate('/categories')}
-            >
-              Go to Quiz Categories
-            </Button>
+            <h2 className="text-2xl font-bold mb-4">Quiz History</h2>
+            {loading ? (
+              <div className="flex justify-center my-8">
+                <div className="w-8 h-8 border-4 border-[rgba(80,126,111,1)] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : error ? (
+              <div className="text-red-600 mb-4">{error}</div>
+            ) : pastResults.length === 0 ? (
+              <div>
+                <p className="mb-6">You haven't taken any quizzes yet.</p>
+                <Button 
+                  variant="primary" 
+                  onClick={() => navigate('/categories')}
+                >
+                  Take Your First Quiz
+                </Button>
+              </div>
+            ) : (
+              <div className="max-w-2xl mx-auto">
+                <h3 className="text-xl font-semibold mb-4">Your Quiz History</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border p-2 text-left">Date</th>
+                        <th className="border p-2 text-left">Category</th>
+                        <th className="border p-2 text-left">Score</th>
+                        <th className="border p-2 text-left">Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pastResults.map((result) => (
+                        <tr key={result.id} className="hover:bg-gray-50">
+                          <td className="border p-2">{result.created_at}</td>
+                          <td className="border p-2">{result.category_name}</td>
+                          <td className="border p-2">{result.score}/{result.total_questions}</td>
+                          <td className="border p-2">
+                            {Math.round((result.score / result.total_questions) * 100)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-6">
+                  <Button
+                    variant="primary"
+                    onClick={() => navigate('/categories')}
+                  >
+                    Take Another Quiz
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
         <Footer />
@@ -242,6 +299,8 @@ const Results: React.FC = () => {
                 <div className="flex justify-center my-8">
                   <div className="w-8 h-8 border-4 border-[rgba(80,126,111,1)] border-t-transparent rounded-full animate-spin"></div>
                 </div>
+              ) : error ? (
+                <div className="text-red-600 my-4">{error}</div>
               ) : pastResults.length === 0 ? (
                 <p className="text-center text-gray-600 my-4">No past quiz results found.</p>
               ) : (

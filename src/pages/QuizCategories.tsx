@@ -11,9 +11,9 @@ import { toast } from "@/hooks/use-toast";
 interface Category {
   id: string;
   name: string;
-  slug?: string;
-  icon?: string;
-  description?: string;
+  slug: string;
+  icon: string;
+  description: string;
 }
 
 const QuizCategories: React.FC = () => {
@@ -21,17 +21,26 @@ const QuizCategories: React.FC = () => {
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const { data, error } = await supabase
           .from('categories')
           .select('*');
         
         if (error) {
           throw error;
+        }
+        
+        if (data.length === 0) {
+          setCategories([]);
+          setError("No quiz categories available at the moment. Please check back later.");
+          return;
         }
         
         // Add default descriptions and slugs if not provided from the DB
@@ -43,8 +52,9 @@ const QuizCategories: React.FC = () => {
         }));
         
         setCategories(processedCategories);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching categories:', error);
+        setError("Failed to load quiz categories. Please try again later.");
         toast({
           title: "Error",
           description: "Failed to load quiz categories",
@@ -73,6 +83,11 @@ const QuizCategories: React.FC = () => {
             <div className="flex justify-center items-center h-64">
               <div className="w-12 h-12 border-4 border-[rgba(80,126,111,1)] border-t-transparent rounded-full animate-spin"></div>
             </div>
+          ) : error ? (
+            <div className="text-center p-8 bg-white rounded-lg shadow-md">
+              <p className="text-xl text-red-600 mb-4">{error}</p>
+              <p>Please try again later or contact support if the problem persists.</p>
+            </div>
           ) : categories.length === 0 ? (
             <div className="text-center">
               <p className="text-xl">No quiz categories available at the moment.</p>
@@ -83,7 +98,7 @@ const QuizCategories: React.FC = () => {
                 <Card 
                   key={category.id} 
                   className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleCategorySelect(category.id, category.slug || '')}
+                  onClick={() => handleCategorySelect(category.id, category.slug)}
                 >
                   <CardHeader className="flex flex-row items-center gap-4">
                     <img 
