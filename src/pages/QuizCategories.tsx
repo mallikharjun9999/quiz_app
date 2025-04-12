@@ -11,9 +11,9 @@ import { toast } from "@/hooks/use-toast";
 interface Category {
   id: string;
   name: string;
-  slug: string;
-  icon: string;
-  description: string;
+  slug?: string;
+  icon?: string;
+  description?: string;
 }
 
 const QuizCategories: React.FC = () => {
@@ -29,15 +29,20 @@ const QuizCategories: React.FC = () => {
         setLoading(true);
         setError(null);
         
+        console.log("Fetching categories...");
+        
         const { data, error } = await supabase
           .from('categories')
           .select('*');
         
         if (error) {
+          console.error("Error fetching categories:", error);
           throw error;
         }
         
-        if (data.length === 0) {
+        console.log("Categories data:", data);
+        
+        if (!data || data.length === 0) {
           setCategories([]);
           setError("No quiz categories available at the moment. Please check back later.");
           return;
@@ -69,6 +74,7 @@ const QuizCategories: React.FC = () => {
   }, []);
 
   const handleCategorySelect = (categoryId: string, categorySlug: string) => {
+    console.log("Selected category:", categoryId, categorySlug);
     navigate(`/quiz/${categorySlug}`, { state: { categoryId } });
   };
 
@@ -98,11 +104,11 @@ const QuizCategories: React.FC = () => {
                 <Card 
                   key={category.id} 
                   className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleCategorySelect(category.id, category.slug)}
+                  onClick={() => handleCategorySelect(category.id, category.slug || '')}
                 >
                   <CardHeader className="flex flex-row items-center gap-4">
                     <img 
-                      src={category.icon} 
+                      src={category.icon || "https://cdn.builder.io/api/v1/image/assets/1f67d0a6911a4bf39ff22ccf7dcdc401/1ac710e76281eb9472b9b5455f035f0217c6c214"} 
                       alt={`${category.name} icon`}
                       className="w-12 h-12 object-contain"
                     />
@@ -111,7 +117,7 @@ const QuizCategories: React.FC = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-base">{category.description}</CardDescription>
+                    <CardDescription className="text-base">{category.description || `Test your knowledge in ${category.name}`}</CardDescription>
                   </CardContent>
                 </Card>
               ))}

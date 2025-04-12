@@ -17,6 +17,7 @@ interface Question {
   option_c: string;
   option_d: string;
   correct_option: string;
+  category_id: string;
 }
 
 const Quiz: React.FC = () => {

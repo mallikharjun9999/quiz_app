@@ -30,7 +30,7 @@ const Index: React.FC = () => {
     }
   };
 
-  // Expose the navigation functions to the global Hero component
+  // Expose the navigation functions to the Hero component
   React.useEffect(() => {
     // @ts-ignore
     window.quizzyNavigation = {

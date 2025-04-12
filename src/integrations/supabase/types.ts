@@ -45,32 +45,38 @@ export type Database = {
       questions: {
         Row: {
           category_id: string | null
+          correct_answer: string
           correct_option: string | null
           id: string
           option_a: string | null
           option_b: string | null
           option_c: string | null
           option_d: string | null
+          options: string[]
           question_text: string
         }
         Insert: {
           category_id?: string | null
+          correct_answer?: string
           correct_option?: string | null
           id?: string
           option_a?: string | null
           option_b?: string | null
           option_c?: string | null
           option_d?: string | null
+          options?: string[]
           question_text: string
         }
         Update: {
           category_id?: string | null
+          correct_answer?: string
           correct_option?: string | null
           id?: string
           option_a?: string | null
           option_b?: string | null
           option_c?: string | null
           option_d?: string | null
+          options?: string[]
           question_text?: string
         }
         Relationships: [
