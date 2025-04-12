@@ -1,5 +1,7 @@
+
 import React from "react";
 import { Button } from "@/components/ui/Button";
+import { Link } from "react-router-dom";
 
 export const CallToAction: React.FC = () => {
   return (
@@ -20,8 +22,12 @@ export const CallToAction: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-4 text-base text-black font-medium whitespace-nowrap mt-8">
-          <Button variant="primary">Start</Button>
-          <Button variant="secondary">Explore</Button>
+          <Link to="/login">
+            <Button variant="primary">Start</Button>
+          </Link>
+          <Link to="/categories">
+            <Button variant="secondary">Explore</Button>
+          </Link>
         </div>
       </div>
     </section>
