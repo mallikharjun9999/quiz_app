@@ -1,12 +1,24 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React from "react";
+import { Navbar } from "@/components/layout/Navbar";
+import { Hero } from "@/components/home/Hero";
+import { Features } from "@/components/home/Features";
+import { Categories } from "@/components/home/Categories";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { CallToAction } from "@/components/home/CallToAction";
+import { Footer } from "@/components/layout/Footer";
 
-const Index = () => {
+const Index: React.FC = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="overflow-hidden">
+      <Navbar />
+      <main>
+        <Hero />
+        <Features />
+        <Categories />
+        <HowItWorks />
+        <CallToAction />
+      </main>
+      <Footer />
     </div>
   );
 };
